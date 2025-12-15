@@ -1,88 +1,168 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'model/place.dart';
-import 'model/order.dart';
+import 'order_trip.dart';
+import 'edit.dart';
+import 'api.dart';
 
-class DetailPage extends StatefulWidget {
+class DetailPage extends StatelessWidget {
   final Place place;
   const DetailPage({super.key, required this.place});
 
-  static List<Order> orders = [];
-
   @override
-  State<DetailPage> createState() => _DetailPageState();
-}
-
-class _DetailPageState extends State<DetailPage> {
-  DateTime? _selectedDate;
-  int _people = 1;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.place.name)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Image.network(widget.place.safeImageUrl,
-              height: 200, fit: BoxFit.cover),
-          const SizedBox(height: 12),
-          Text(widget.place.location,
-              style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 8),
-          Text(widget.place.description),
-          const SizedBox(height: 20),
-          ListTile(
-            title: const Text('Tanggal Trip'),
-            subtitle: Text(_selectedDate != null
-                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                : 'Pilih tanggal'),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) setState(() => _selectedDate = picked);
-            },
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Jumlah Orang'),
-              Row(
-                children: [
-                  IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed:
-                          _people > 1 ? () => setState(() => _people--) : null),
-                  Text('$_people'),
-                  IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => setState(() => _people++)),
-                ],
-              )
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 300,
+            pinned: true,
+            backgroundColor: const Color(0xFF00AAFF),
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(place.name, style: const TextStyle(fontSize: 16)),
+              background: CachedNetworkImage(
+                imageUrl: place.safeImageUrl,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => const Icon(Icons.error, size: 50, color: Colors.white),
+              ),
+            ),
+            actions: [
+              // Edit Button
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () async {
+                   final bool? updated = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (final _) => EditPage(place: place)),
+                  );
+                  if (updated == true) {
+                    Navigator.pop(context); // Go back to refresh list
+                  }
+                },
+              ),
+              // Delete Button
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () async {
+                  final bool confirm = await showDialog(
+                    context: context,
+                    builder: (final context) => AlertDialog(
+                      title: const Text('Hapus Tempat?'),
+                      content: const Text('Tindakan ini tidak bisa dibatalkan.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  ) ?? false;
+
+                  if (confirm && place.id != null) {
+                    await ApiService.deletePlace(place.id!);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+              ),
             ],
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00AAFF)),
-            onPressed: _selectedDate == null
-                ? null
-                : () {
-                    DetailPage.orders.add(Order(
-                      placeName: widget.place.name,
-                      date: _selectedDate!,
-                      people: _people,
-                    ));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Trip berhasil dibooking')));
-                  },
-            child: const Text('Pesan Trip'),
-          )
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(place.location,
+                          style: const TextStyle(color: Colors.grey)),
+                      const Spacer(),
+                      const Icon(Icons.star, size: 16, color: Colors.amber),
+                      Text('${place.rating} / 5'),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _infoBox('Ketinggian', '${place.elevation} mdpl'),
+                      _infoBox('Kategori', place.category),
+                      _infoBox('Jarak', '12 km'), // Dummy distance
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('Deskripsi',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(place.description,
+                      style: const TextStyle(color: Colors.black87, height: 1.5)),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.all(16),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(13),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00AAFF),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (final _) => OrderTripPage(place: place)),
+            );
+          },
+          child: const Text(
+            'Booking Sekarang',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoBox(final String label, final String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

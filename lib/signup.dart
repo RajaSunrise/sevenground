@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
+import 'services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -14,15 +15,31 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  bool _loading = false;
 
   Future<void> _signup() async {
     if (_formKey.currentState!.validate()) {
-      // Sementara langsung navigasi tanpa Firebase
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+      setState(() => _loading = true);
+
+      final bool success = await AuthService.register(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _confirmPasswordController.text.trim(),
       );
-      // Jika nanti pakai Firebase, kembalikan kode asli dan import firebase_auth
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registrasi gagal. Email mungkin sudah terdaftar.')),
+        );
+      }
+      setState(() => _loading = false);
     }
   }
 
@@ -75,8 +92,11 @@ class _SignupPageState extends State<SignupPage> {
                 },
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                  onPressed: _signup, child: const Text('Create Account')),
+              if (_loading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                    onPressed: _signup, child: const Text('Create Account')),
             ],
           ),
         ),

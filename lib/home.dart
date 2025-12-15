@@ -3,6 +3,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'api.dart';
 import 'model/place.dart';
 import 'detail.dart';
+import 'add.dart';
+import 'profile.dart';
+import 'my_order.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,7 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final Future<List<Place>> _placesFuture;
+  late Future<List<Place>> _placesFuture;
   final PageController _bannerController = PageController();
 
   String _searchQuery = '';
@@ -34,7 +37,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _placesFuture = ApiService.getAllPlaces();
+    _loadPlaces();
+  }
+
+  void _loadPlaces() {
+    setState(() {
+      _placesFuture = ApiService.getAllPlaces();
+    });
   }
 
   List<Place> _filterPlaces(final List<Place> places) {
@@ -56,6 +65,40 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF00AAFF),
         title: const Text('Lombok Adventure',
             style: TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long, color: Colors.white),
+            onPressed: () {
+               Navigator.push(
+                context,
+                MaterialPageRoute(builder: (final _) => const MyOrderPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person, color: Colors.white),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (final _) => const ProfilePage()),
+              );
+              // Reload in case logged out or something (though logged out usually goes to login page)
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final bool? added = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (final _) => const AddPage()),
+          );
+          if (added == true) {
+            _loadPlaces();
+          }
+        },
+        backgroundColor: const Color(0xFF00AAFF),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: CustomScrollView(
         slivers: [
@@ -107,8 +150,8 @@ class _HomePageState extends State<HomePage> {
                           height: 48,
                           decoration: BoxDecoration(
                             color: selected
-                                ? Colors.blue.withValues(alpha: 64)
-                                : Colors.blue.withValues(alpha: 38),
+                                ? Colors.blue.withAlpha(64)
+                                : Colors.blue.withAlpha(38),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(menu['icon'], color: Colors.blue),
@@ -169,11 +212,19 @@ class _HomePageState extends State<HomePage> {
                   return const SliverToBoxAdapter(
                       child: Center(child: CircularProgressIndicator()));
                 }
+                if (snapshot.hasError) {
+                   return SliverToBoxAdapter(
+                      child: Center(child: Text('Error: ${snapshot.error}')));
+                }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const SliverToBoxAdapter(
                       child: Center(child: Text('Data tidak ditemukan')));
                 }
                 final List<Place> places = _filterPlaces(snapshot.data!);
+                if (places.isEmpty) {
+                   return const SliverToBoxAdapter(
+                      child: Center(child: Text('Tidak ada yang cocok')));
+                }
                 return SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -184,11 +235,14 @@ class _HomePageState extends State<HomePage> {
                     (final BuildContext context, final int i) {
                       final Place place = places[i];
                       return GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (final _) => DetailPage(place: place)),
-                        ),
+                        onTap: () async {
+                           await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (final _) => DetailPage(place: place)),
+                          );
+                          _loadPlaces(); // Reload to reflect any updates/deletes
+                        },
                         child: Card(
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
@@ -199,7 +253,9 @@ class _HomePageState extends State<HomePage> {
                                 aspectRatio: 4 / 3,
                                 child: CachedNetworkImage(
                                     imageUrl: place.safeImageUrl,
-                                    fit: BoxFit.cover),
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                                ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(12),
@@ -229,6 +285,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
         ],
       ),
     );
