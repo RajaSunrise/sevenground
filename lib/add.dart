@@ -122,9 +122,6 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  /// =========================
-  /// FORM FIELD WIDGET
-  /// =========================
   Widget _field({
     required final TextEditingController controller,
     required final String label,
@@ -147,9 +144,6 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  /// =========================
-  /// VALIDATORS
-  /// =========================
   String? _required(final String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Field tidak boleh kosong';
@@ -165,21 +159,13 @@ class _AddPageState extends State<AddPage> {
     return null;
   }
 
-  /// =========================
-  /// SUBMIT LOGIC
-  /// =========================
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final int? elevation = int.tryParse(_elevationController.text);
     final int? rating = int.tryParse(_ratingController.text);
 
-    if (elevation == null || rating == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ketinggian dan rating harus angka')),
-      );
-      return;
-    }
+    if (elevation == null || rating == null) return;
 
     setState(() => _loading = true);
 

@@ -1,41 +1,102 @@
 import 'package:flutter/material.dart';
-import 'detail.dart';
-import 'model/order.dart';
+import 'package:intl/intl.dart';
+import 'model/order_model.dart';
+import 'services/local_data_service.dart';
 
-class MyOrderPage extends StatelessWidget {
+class MyOrderPage extends StatefulWidget {
   const MyOrderPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Order> orders = DetailPage.orders;
+  State<MyOrderPage> createState() => _MyOrderPageState();
+}
 
+class _MyOrderPageState extends State<MyOrderPage> {
+  late Future<List<OrderTrip>> _ordersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  void _loadOrders() {
+    setState(() {
+      _ordersFuture = LocalDataService.getOrders();
+    });
+  }
+
+  @override
+  Widget build(final BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: const Text('Pesanan Saya'),
         backgroundColor: const Color(0xFF00AAFF),
       ),
-      body: orders.isEmpty
-          ? const Center(
-              child: Text(
-                'Belum ada booking',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-          : ListView.builder(
-              itemCount: orders.length,
-              itemBuilder: (context, index) {
-                final Order order = orders[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    title: Text(order.placeName),
-                    subtitle: Text(
-                        'Tanggal: ${order.date.day}/${order.date.month}/${order.date.year}\nOrang: ${order.people}'),
+      body: FutureBuilder<List<OrderTrip>>(
+        future: _ordersFuture,
+        builder: (final context, final snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Belum ada pesanan'));
+          }
+
+          final List<OrderTrip> orders = snapshot.data!.reversed.toList(); // Newest first
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: orders.length,
+            itemBuilder: (final context, final index) {
+              final OrderTrip order = orders[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(order.placeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: order.status == 'Paid' ? Colors.green[100] : Colors.orange[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              order.status,
+                              style: TextStyle(
+                                color: order.status == 'Paid' ? Colors.green[800] : Colors.orange[800],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Tanggal: ${order.date}'),
+                      Text('Peserta: ${order.pax} orang'),
+                      Text('Metode: ${order.paymentMethod}'),
+                      const Divider(),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Total: Rp ${NumberFormat('#,###').format(order.totalPrice)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
