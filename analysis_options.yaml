@@ -1,0 +1,58 @@
+# Gunakan flutter_lints sebagai base (sudah up-to-date dan kompatibel dengan Flutter terbaru)
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # --- BEST PRACTICES (aktifkan yang penting) ---
+    avoid_print: true
+    prefer_relative_imports: true
+    use_build_context_synchronously: false  # aman dimatikan kalau sering pakai async
+    use_key_in_widget_constructors: false
+    library_private_types_in_public_api: false
+
+    # --- STYLE ---
+    prefer_single_quotes: true
+
+    # Const-related: aktifkan kalau mau ditegakkan, matikan kalau sering terganggu
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_const_declarations: true
+
+    # --- PERFORMANCE & SAFETY ---
+    prefer_final_locals: true
+    prefer_final_parameters: true      # Ini yang bikin warning "Prefer final for parameter" muncul
+    prefer_final_fields: true
+
+    # --- FLUTTER SPECIFIC ---
+    avoid_unnecessary_containers: true
+    sized_box_for_whitespace: true
+    sized_box_shrink_expand: true     # bonus: hindari SizedBox yang tidak perlu
+
+    # --- DEPRECATED API (penting untuk Flutter terbaru) ---
+    # Matikan warning withOpacity deprecated supaya tidak muncul di analyze
+    deprecated_member_use_from_same_package: warn   # default warn, biarkan
+    # Tidak ada rule khusus untuk withOpacity, jadi kita abaikan via errors di bawah
+
+    # Opsional: matikan beberapa yang terlalu ketat
+    avoid_types_as_parameter_names: false
+    unnecessary_overrides: false
+
+analyzer:
+  errors:
+    # Abaikan error yang sering false-positive
+    invalid_use_of_visible_for_testing_member: ignore
+    invalid_use_of_protected_member: ignore
+
+    # Khusus untuk menghilangkan warning withOpacity deprecated
+    deprecated_member_use: warning                  # ubah dari error jadi warning saja
+    deprecated_member_use_from_same_package: warning
+
+    # Dead code seperti ?? pada non-nullable tetap muncul sebagai info/hint
+    dead_code: info
+
+  exclude:
+    - build/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "**/*.gr.dart"

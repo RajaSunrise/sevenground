@@ -1,0 +1,40 @@
+name: sevenground
+description: Gunung & Bukit Terbaik Sembalun Lombok
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP API
+  http: ^1.2.2
+
+  # Image caching
+  cached_network_image: ^3.3.1
+
+  # Fonts
+  google_fonts: ^6.2.1
+
+  # Login session
+  shared_preferences: ^2.2.2
+
+  # Icons tambahan (optional)
+  material_symbols_icons: ^4.2892.0
+
+  # Hapus sementara Firebase karena FlutLab tidak mendukung
+  # firebase_core: ^2.25.0
+  # firebase_auth: ^4.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
