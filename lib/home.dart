@@ -88,6 +88,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Tambah',
         onPressed: () async {
           final bool? added = await Navigator.push(
             context,
@@ -100,11 +101,15 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF00AAFF),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: CustomScrollView(
-        slivers: [
-          // Search Field
-          SliverToBoxAdapter(
-            child: Padding(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadPlaces();
+        },
+        child: CustomScrollView(
+          slivers: [
+            // Search Field
+            SliverToBoxAdapter(
+              child: Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
                 onChanged: (final String v) =>
@@ -230,7 +235,7 @@ class _HomePageState extends State<HomePage> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 0.72),
+                      childAspectRatio: 0.75),
                   delegate: SliverChildBuilderDelegate(
                     (final BuildContext context, final int i) {
                       final Place place = places[i];
@@ -285,8 +290,9 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+          ],
+        ),
       ),
     );
   }

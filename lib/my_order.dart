@@ -85,7 +85,7 @@ class _MyOrderPageState extends State<MyOrderPage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          'Total: Rp ${NumberFormat('#,###').format(order.totalPrice)}',
+                          'Total: ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.totalPrice)}',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                         ),
                       ),

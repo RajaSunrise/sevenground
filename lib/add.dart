@@ -56,7 +56,18 @@ class _AddPageState extends State<AddPage> {
               label: 'Lokasi',
               validator: _required,
             ),
-            _field(controller: _imageController, label: 'Image URL'),
+            _field(
+              controller: _imageController,
+              label: 'Image URL',
+              validator: (final String? value) {
+                if (value != null && value.isNotEmpty) {
+                  if (!value.startsWith('http')) {
+                    return 'URL harus dimulai dengan http/https';
+                  }
+                }
+                return null;
+              },
+            ),
             _field(
               controller: _descriptionController,
               label: 'Deskripsi',
@@ -130,7 +141,7 @@ class _AddPageState extends State<AddPage> {
     final String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: type,

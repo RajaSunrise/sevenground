@@ -23,7 +23,10 @@ class DetailPage extends StatelessWidget {
               background: CachedNetworkImage(
                 imageUrl: place.safeImageUrl,
                 fit: BoxFit.cover,
-                errorWidget: (context, url, error) => const Icon(Icons.error, size: 50, color: Colors.white),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                ),
               ),
             ),
             actions: [

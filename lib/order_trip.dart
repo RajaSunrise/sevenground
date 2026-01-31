@@ -15,6 +15,12 @@ class OrderTripPage extends StatefulWidget {
 class _OrderTripPageState extends State<OrderTripPage> {
   final _formKey = GlobalKey<FormState>();
 
+  final _currencyFormat = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
   // Form fields
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   int _pax = 1;
@@ -185,7 +191,7 @@ class _OrderTripPageState extends State<OrderTripPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Harga per orang'),
-                        Text('Rp ${NumberFormat('#,###').format(_basePrice)}'),
+                        Text(_currencyFormat.format(_basePrice)),
                       ],
                     ),
                     const Divider(),
@@ -193,7 +199,7 @@ class _OrderTripPageState extends State<OrderTripPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Total Bayar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('Rp ${NumberFormat('#,###').format(_totalPrice)}',
+                        Text(_currencyFormat.format(_totalPrice),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
                       ],
                     ),
